@@ -1,2 +1,657 @@
 # Samickthk-Melon-Smart-Farm
-Samickthk Melon Smart Farm HTML
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samickthk Melon Smart Farm</title>
+    
+    <!-- Online Libraries (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Web Fonts for consistent styling -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* 기본 폰트 및 라이트 테마 레이아웃 설정 */
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            background-color: #F3F4F6; /* 라이트 모드 배경 */
+            color: #1F2937;
+            overflow: hidden; /* 전체 페이지 스크롤 방지 */
+        }
+        .main-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            background-color: #F3F4F6;
+        }
+        /* 사이드바 스타일 */
+        .sidebar {
+            width: 280px;
+            background-color: #FFFFFF;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            border-right: 1px solid #E5E7EB;
+        }
+        .sidebar .logo {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 3rem;
+            color: #16A34A; /* 삼익THK 녹색 */
+        }
+        .sidebar .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .sidebar .nav-item:hover {
+            background-color: #F3F4F6;
+            color: #111827;
+        }
+        .sidebar .nav-item.active {
+            background-color: #16A34A;
+            color: #FFFFFF;
+            font-weight: 700;
+        }
+        .sidebar .nav-item i {
+            width: 2rem;
+            font-size: 1.2rem;
+        }
+        .sidebar .footer {
+            margin-top: auto;
+            font-size: 0.8rem;
+            color: #9CA3AF;
+        }
+        /* 메인 컨텐츠 영역 */
+        .content-area {
+            flex-grow: 1;
+            padding: 2.5rem;
+            overflow-y: auto;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* 공통 카드 스타일 */
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+        /* 그리드 레이아웃 */
+        .grid-container {
+            display: grid;
+            gap: 1.5rem;
+        }
+        /* 온실 시각화 맵 */
+        .greenhouse-map {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 0.5rem;
+            height: 120px;
+            align-items: center;
+        }
+        .pipe {
+            background-color: #D1D5DB;
+            height: 20px;
+            border-radius: 10px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pipe .robot-icon {
+            color: #F59E0B;
+            font-size: 1.5rem;
+            position: absolute;
+            transition: left 1s linear;
+        }
+        /* 스크롤바 스타일 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F3F4F6;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D1D5DB;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF;
+        }
+        /* 입력 필드 스타일 */
+        input, select {
+            background-color: #F9FAFB;
+            border: 1px solid #D1D5DB;
+            color: #1F2937;
+        }
+        input:focus, select:focus {
+            outline: 2px solid #2563EB;
+            border-color: transparent;
+        }
+        /* 설정 탭 활성 메뉴 스타일 */
+        #settings-menu .settings-menu-item.active {
+            background-color: #E5E7EB;
+            font-weight: 700;
+            color: #111827;
+        }
+        .settings-panel {
+            display: none;
+        }
+        .settings-panel.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- 좌측 고정 사이드바 -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-seedling"></i> Samickthk Melon Farm
+            </div>
+            <nav>
+                <div class="nav-item active" onclick="switchTab('robot')">
+                    <i class="fa-solid fa-robot"></i> 로봇
+                </div>
+                <div class="nav-item" onclick="switchTab('vision')">
+                    <i class="fa-solid fa-camera-retro"></i> 비전
+                </div>
+                <div class="nav-item" onclick="switchTab('growth')">
+                    <i class="fa-solid fa-chart-line"></i> 생육관리
+                </div>
+                <div class="nav-item" onclick="switchTab('environment')">
+                    <i class="fa-solid fa-temperature-half"></i> 온실환경
+                </div>
+                <div class="nav-item" onclick="switchTab('settings')">
+                    <i class="fa-solid fa-gear"></i> 환경설정
+                </div>
+            </nav>
+            <div class="footer">
+                <p>&copy; 2025 Samickthk Solutions.</p>
+                <p>Version 2.0.0</p>
+            </div>
+        </aside>
+
+        <!-- 메인 컨텐츠 영역 -->
+        <main class="content-area">
+            <!-- 로봇 탭 -->
+            <div id="tab-robot" class="tab-content active">
+                <h1 class="text-3xl font-bold mb-6 text-gray-800">로봇 관제 대시보드</h1>
+                <div class="grid-container" style="grid-template-columns: 2fr 1fr;">
+                    <!-- 좌측 패널 -->
+                    <div class="flex flex-col gap-6">
+                        <div class="card">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-700">온실 시각화 맵 (온수배관 12줄)</h2>
+                            <div id="greenhouse-map" class="greenhouse-map"></div>
+                            <div id="robot-status-text" class="mt-4 text-sm text-gray-500"></div>
+                        </div>
+                        <div class="card">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-700">미션 컨트롤 센터</h2>
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <h3 class="font-bold mb-2 text-gray-600">미션 스케줄러</h3>
+                                    <input type="text" placeholder="수확 대상 위치 (예: 3-15)" class="w-full p-2 rounded mb-2">
+                                    <input type="datetime-local" class="w-full p-2 rounded mb-2">
+                                    <select class="w-full p-2 rounded mb-2">
+                                        <option>우선순위: 보통</option>
+                                        <option>우선순위: 높음</option>
+                                        <option>우선순위: 긴급</option>
+                                    </select>
+                                    <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">미션 생성</button>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold mb-2 text-gray-600">수확 결과 요약</h3>
+                                    <p class="text-gray-600">총 수확량: <span id="harvest-total" class="font-semibold text-gray-800">1,204개</span></p>
+                                    <p class="text-gray-600">품질 등급 (상/중/하): <span id="harvest-quality" class="font-semibold text-gray-800">80% / 15% / 5%</span></p>
+                                    <p class="text-gray-600">시간당 처리량: <span id="harvest-rate" class="font-semibold text-gray-800">50개/hr</span></p>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <h3 class="font-bold mb-2 text-gray-600">미션 리스트</h3>
+                                <div class="h-40 overflow-y-auto">
+                                    <table class="w-full text-sm text-left text-gray-500">
+                                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                            <tr><th class="px-4 py-2">ID</th><th class="px-4 py-2">배관</th><th class="px-4 py-2">상태</th><th class="px-4 py-2">작업</th></tr>
+                                        </thead>
+                                        <tbody id="mission-list" class="bg-white">
+                                            <!-- 미션 데이터 동적 삽입 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 우측 패널 -->
+                    <div class="flex flex-col gap-6">
+                        <div class="card">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-700">로봇 상태 요약</h2>
+                            <div class="mb-4">
+                                <h3 class="font-bold text-gray-600">주행 로봇</h3>
+                                <p class="text-gray-600">위치: <span id="drive-robot-location" class="font-semibold text-gray-800">배관 3, 25m 지점</span></p>
+                                <p class="text-gray-600">속도: <span id="drive-robot-speed" class="font-semibold text-gray-800">0.5 m/s</span></p>
+                                <p class="text-gray-600">배터리: <span id="drive-robot-battery" class="font-semibold text-gray-800">78%</span></p>
+                                <p class="text-gray-600">연결 상태: <span id="drive-robot-connection" class="font-semibold text-green-600">양호</span></p>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-600">협동 로봇</h3>
+                                <p class="text-gray-600">동작 상태: <span id="coop-robot-status" class="font-semibold text-yellow-600">수확 중</span></p>
+                                <p class="text-gray-600">관절 각도: <span id="coop-robot-angle" class="font-semibold text-gray-800">J1:30, J2:45, ...</span></p>
+                                <p class="text-gray-600">미션 진행률: <span id="coop-robot-progress" class="font-semibold text-gray-800">65%</span></p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-700">제어 패널</h2>
+                            <div class="grid grid-cols-3 gap-2 mb-4">
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded">앞으로</button>
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded">정지</button>
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded">뒤로</button>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 mb-4">
+                                <button class="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded">그립</button>
+                                <button class="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded">회전</button>
+                                <button class="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded">리셋</button>
+                            </div>
+                            <button class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded mb-4">
+                                <i class="fa-solid fa-triangle-exclamation"></i> 긴급 정지
+                            </button>
+                            <div class="h-24 bg-gray-100 rounded p-2 overflow-y-auto text-xs font-mono text-gray-700" id="system-log">
+                                <!-- 시스템 로그 동적 삽입 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 비전 탭 -->
+            <div id="tab-vision" class="tab-content">
+                <h1 class="text-3xl font-bold mb-6 text-gray-800">비전 모니터링</h1>
+                <div class="grid-container" style="grid-template-columns: 3fr 2fr; height: calc(100vh - 12rem);">
+                    <div class="card h-full flex flex-col">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-700">실시간 영상 패널 (YOLO 탐지)</h2>
+                        <div class="flex-grow bg-black rounded-lg relative">
+                            <img src="https://placehold.co/1000x600/333333/FFFFFF?text=Real-time+Camera+Feed" class="w-full h-full object-cover rounded-lg opacity-80">
+                            <!-- YOLO 탐지 결과 오버레이 (예시) -->
+                            <div class="absolute border-2 border-green-400" style="left: 20%; top: 30%; width: 150px; height: 150px;">
+                                <span class="bg-green-400 text-black text-xs font-bold p-1">멜론 (건강) 98%</span>
+                            </div>
+                            <div class="absolute border-2 border-red-500" style="left: 60%; top: 50%; width: 120px; height: 80px;">
+                                <span class="bg-red-500 text-white text-xs font-bold p-1">흰가루병 (감지) 87%</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-center gap-4 mt-4">
+                            <button class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold p-2 rounded">전체 보기</button>
+                            <button class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-semibold p-2 rounded">생육 상태만 보기</button>
+                            <button class="bg-red-500 hover:bg-red-600 text-white font-semibold p-2 rounded">병해충만 보기</button>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-6" style="max-height: 100%; overflow-y: auto;">
+                        <div class="card">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-700">AI 분석 및 추천</h2>
+                            <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 rounded mb-4">
+                                <p class="font-bold"><i class="fa-solid fa-lightbulb"></i> 조치 추천</p>
+                                <p id="ai-recommendation">3번 구역 흰가루병 감지. 해당 구역 방제 프로토콜 실행을 제안합니다.</p>
+                            </div>
+                            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded">
+                                <p class="font-bold"><i class="fa-solid fa-bell"></i> 긴급 알림</p>
+                                <p id="ai-alert">7번 구역에서 응애 확산 의심. 즉시 확인 필요.</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-700">병해충 발생 추이</h2>
+                            <div class="relative h-56">
+                                <canvas id="pest-chart"></canvas>
+                            </div>
+                        </div>
+                         <div class="card">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-700">생육 상태 분포</h2>
+                            <div class="relative h-56">
+                                <canvas id="growth-status-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 생육관리 탭 -->
+            <div id="tab-growth" class="tab-content">
+                <h1 class="text-3xl font-bold mb-6 text-gray-800">생육 관리</h1>
+                <div class="grid-container" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+                    <!-- 생육 정보 카드 동적 생성 -->
+                </div>
+            </div>
+
+            <!-- 온실환경 탭 -->
+            <div id="tab-environment" class="tab-content">
+                <h1 class="text-3xl font-bold mb-6 text-gray-800">온실 환경 모니터링</h1>
+                <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="card col-span-full"><h2 class="text-xl font-semibold text-gray-700">기후 및 대기 정보</h2></div>
+                    <div class="card text-center"><p class="text-gray-500">내부 온도</p><p class="text-3xl font-bold text-gray-800" id="env-temp-in">25.4 °C</p></div>
+                    <div class="card text-center"><p class="text-gray-500">내부 습도</p><p class="text-3xl font-bold text-gray-800" id="env-humid-in">65 %</p></div>
+                    <div class="card text-center"><p class="text-gray-500">CO₂ 농도</p><p class="text-3xl font-bold text-gray-800" id="env-co2">800 ppm</p></div>
+                    <div class="card text-center"><p class="text-gray-500">조도</p><p class="text-3xl font-bold text-gray-800" id="env-light">12000 lux</p></div>
+
+                    <div class="card col-span-full mt-4"><h2 class="text-xl font-semibold text-gray-700">토양 및 수분 정보</h2></div>
+                    <div class="card text-center"><p class="text-gray-500">토양 온도</p><p class="text-3xl font-bold text-gray-800" id="env-soil-temp">22.1 °C</p></div>
+                    <div class="card text-center"><p class="text-gray-500">토양 습도</p><p class="text-3xl font-bold text-gray-800" id="env-soil-humid">55 %</p></div>
+                    <div class="card text-center"><p class="text-gray-500">pH</p><p class="text-3xl font-bold text-gray-800" id="env-ph">6.5</p></div>
+                    <div class="card text-center"><p class="text-gray-500">EC</p><p class="text-3xl font-bold text-gray-800" id="env-ec">1.8 mS/cm</p></div>
+
+                    <div class="card md:col-span-2 mt-4"><h2 class="text-xl font-semibold text-gray-700">설비 및 장비 상태</h2>
+                        <ul id="equipment-status" class="mt-2 space-y-1 text-gray-600"></ul>
+                    </div>
+                    <div class="card md:col-span-2 mt-4"><h2 class="text-xl font-semibold text-gray-700">에너지 및 자원 사용량</h2>
+                         <ul id="resource-usage" class="mt-2 space-y-1 text-gray-600"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 환경설정 탭 -->
+            <div id="tab-settings" class="tab-content">
+                <h1 class="text-3xl font-bold mb-6 text-gray-800">환경설정</h1>
+                <div class="grid-container" style="grid-template-columns: 1fr 2.5fr;">
+                    <!-- 설정 메뉴 -->
+                    <div class="card">
+                       <ul class="space-y-2" id="settings-menu">
+                           <li><a href="#" data-target="alarm" class="settings-menu-item block p-3 rounded active">알림 설정</a></li>
+                           <li><a href="#" data-target="user" class="settings-menu-item block p-3 rounded">사용자 관리</a></li>
+                           <li><a href="#" data-target="data" class="settings-menu-item block p-3 rounded">데이터 관리</a></li>
+                           <li><a href="#" data-target="ai" class="settings-menu-item block p-3 rounded">AI 학습 및 피드백</a></li>
+                           <li><a href="#" data-target="integration" class="settings-menu-item block p-3 rounded">외부 연동 설정</a></li>
+                           <li><a href="#" data-target="test" class="settings-menu-item block p-3 rounded">테스트 및 시뮬레이션</a></li>
+                       </ul>
+                    </div>
+                    <!-- 설정 상세 내용 -->
+                    <div class="card">
+                        <!-- 알림 설정 패널 -->
+                        <div id="settings-alarm" class="settings-panel active">
+                            <h2 class="text-2xl font-bold mb-4 text-gray-800">알림 설정</h2>
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold mb-2 text-gray-700">알림 조건</h3>
+                                <label class="flex items-center text-gray-600"><input type="checkbox" class="form-checkbox h-5 w-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500" checked> <span class="ml-2">병해충 탐지 시</span></label>
+                                <label class="flex items-center text-gray-600"><input type="checkbox" class="form-checkbox h-5 w-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500" checked> <span class="ml-2">생육 이상 징후 발생 시</span></label>
+                                <label class="flex items-center text-gray-600"><input type="checkbox" class="form-checkbox h-5 w-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"> <span class="ml-2">센서 오류 발생 시</span></label>
+                            </div>
+                             <div class="mb-6">
+                                <h3 class="text-lg font-semibold mb-2 text-gray-700">알림 방식</h3>
+                                 <label class="flex items-center text-gray-600"><input type="checkbox" class="form-checkbox h-5 w-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500" checked> <span class="ml-2">팝업</span></label>
+                                 <label class="flex items-center text-gray-600"><input type="checkbox" class="form-checkbox h-5 w-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500" checked> <span class="ml-2">이메일</span></label>
+                                 <label class="flex items-center text-gray-600"><input type="checkbox" class="form-checkbox h-5 w-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"> <span class="ml-2">앱 푸시</span></label>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold mb-2 text-gray-700">알림 수신자 관리</h3>
+                                <input type="text" placeholder="이메일 또는 전화번호 추가" class="w-full p-2 rounded">
+                            </div>
+                        </div>
+                        <!-- 사용자 관리 패널 -->
+                        <div id="settings-user" class="settings-panel">
+                             <h2 class="text-2xl font-bold mb-4 text-gray-800">사용자 관리</h2>
+                             <p>사용자 목록 및 권한을 설정하는 영역입니다.</p>
+                        </div>
+                        <!-- 데이터 관리 패널 -->
+                        <div id="settings-data" class="settings-panel">
+                             <h2 class="text-2xl font-bold mb-4 text-gray-800">데이터 관리</h2>
+                             <p>데이터 저장 주기 및 백업/복원 기능을 설정하는 영역입니다.</p>
+                        </div>
+                        <!-- AI 학습 패널 -->
+                        <div id="settings-ai" class="settings-panel">
+                             <h2 class="text-2xl font-bold mb-4 text-gray-800">AI 학습 및 피드백</h2>
+                             <p>AI 모델의 성능을 모니터링하고 사용자 피드백을 관리하는 영역입니다.</p>
+                        </div>
+                        <!-- 외부 연동 패널 -->
+                        <div id="settings-integration" class="settings-panel">
+                             <h2 class="text-2xl font-bold mb-4 text-gray-800">외부 연동 설정</h2>
+                             <p>외부 API 및 클라우드 저장소 연동을 설정하는 영역입니다.</p>
+                        </div>
+                        <!-- 테스트 패널 -->
+                        <div id="settings-test" class="settings-panel">
+                             <h2 class="text-2xl font-bold mb-4 text-gray-800">테스트 및 시뮬레이션</h2>
+                             <p>센서 및 AI 조치에 대한 시뮬레이션을 수행하는 영역입니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 탭 전환 로직
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.querySelector(`.nav-item[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            
+            if (tabId === 'vision') {
+                renderVisionCharts();
+            }
+        }
+
+        // --- REST API 통신 시뮬레이션 및 데이터 업데이트 ---
+
+        const robotState = {
+            pipe: 3,
+            position: 25, // 0-100%
+            status: '수확 중',
+            battery: 78,
+            missions: [
+                { id: 'M001', pipe: 3, status: '진행 중' },
+                { id: 'M002', pipe: 7, status: '대기' },
+                { id: 'M003', pipe: 1, status: '완료' },
+            ],
+            log: []
+        };
+
+        function updateRobotData() {
+            robotState.position += 5;
+            if (robotState.position > 100) {
+                robotState.position = 0;
+                robotState.pipe = (robotState.pipe % 12) + 1;
+            }
+            robotState.battery -= 0.1;
+            if (robotState.battery < 0) robotState.battery = 100;
+
+            document.getElementById('drive-robot-location').textContent = `배관 ${robotState.pipe}, ${robotState.position.toFixed(0)}m 지점`;
+            document.getElementById('drive-robot-speed').textContent = `${(Math.random() * 0.2 + 0.4).toFixed(2)} m/s`;
+            document.getElementById('drive-robot-battery').textContent = `${robotState.battery.toFixed(1)}%`;
+            document.getElementById('coop-robot-status').textContent = robotState.status;
+            document.getElementById('coop-robot-progress').textContent = `${(Math.random() * 100).toFixed(0)}%`;
+
+            const map = document.getElementById('greenhouse-map');
+            const robotIcon = map.querySelector('.robot-icon');
+            if (robotIcon) {
+                const newPipe = map.children[robotState.pipe - 1];
+                if(newPipe) {
+                    newPipe.appendChild(robotIcon);
+                    robotIcon.style.left = `${robotState.position}%`;
+                }
+            }
+            
+            const statusText = document.getElementById('robot-status-text');
+            statusText.innerHTML = '';
+            for(let i=1; i<=12; i++){
+                let text = `배관 ${i}: 대기 중`;
+                if(i === robotState.pipe) text = `배관 ${i}: <span class="text-yellow-600 font-semibold">${robotState.status}</span>`;
+                statusText.innerHTML += `<span class="inline-block w-1/4 md:w-1/6">${text}</span>`;
+            }
+
+            const missionList = document.getElementById('mission-list');
+            missionList.innerHTML = robotState.missions.map(m => `
+                <tr class="border-b">
+                    <td class="px-4 py-2">${m.id}</td>
+                    <td class="px-4 py-2">${m.pipe}</td>
+                    <td class="px-4 py-2"><span class="${m.status === '진행 중' ? 'text-yellow-600' : (m.status === '완료' ? 'text-green-600' : 'text-gray-500')}">${m.status}</span></td>
+                    <td class="px-4 py-2"><button class="text-red-500 hover:text-red-700 text-xs">취소</button></td>
+                </tr>
+            `).join('');
+
+            const logPanel = document.getElementById('system-log');
+            const logMessages = ["미션 M001 시작", "배터리 75% 이하", "장애물 감지", "수확 완료", "충전 스테이션으로 이동"];
+            if (Math.random() > 0.7) {
+                const newLog = `[${new Date().toLocaleTimeString()}] ${logMessages[Math.floor(Math.random() * logMessages.length)]}`;
+                robotState.log.unshift(newLog);
+                if (robotState.log.length > 20) robotState.log.pop();
+                logPanel.innerHTML = robotState.log.join('<br>');
+            }
+        }
+
+        function updateEnvironmentData() {
+            document.getElementById('env-temp-in').textContent = `${(25 + Math.random()).toFixed(1)} °C`;
+            document.getElementById('env-humid-in').textContent = `${(65 + Math.random() * 2 - 1).toFixed(0)} %`;
+            document.getElementById('env-co2').textContent = `${(800 + Math.random() * 50 - 25).toFixed(0)} ppm`;
+            document.getElementById('env-light').textContent = `${(12000 + Math.random() * 500 - 250).toFixed(0)} lux`;
+            document.getElementById('env-soil-temp').textContent = `${(22 + Math.random()*0.5).toFixed(1)} °C`;
+            document.getElementById('env-soil-humid').textContent = `${(55 + Math.random() * 2 - 1).toFixed(0)} %`;
+            document.getElementById('env-ph').textContent = `${(6.5 + Math.random() * 0.2 - 0.1).toFixed(1)}`;
+            document.getElementById('env-ec').textContent = `${(1.8 + Math.random() * 0.2 - 0.1).toFixed(1)} mS/cm`;
+        }
+
+        function generateGrowthData() {
+            const container = document.querySelector('#tab-growth .grid-container');
+            if (!container) return;
+            container.innerHTML = '';
+            const stages = ['발아', '생장', '개화', '수확'];
+            const pestStatus = [{ text: '없음', color: 'green' }, { text: '감지', color: 'red' }];
+            for (let i = 1; i <= 20; i++) {
+                const currentPest = pestStatus[Math.floor(Math.random() * pestStatus.length)];
+                const card = `
+                    <div class="card">
+                        <h3 class="text-lg font-bold mb-2 text-gray-700">구역 ${i}</h3>
+                        <p class="text-gray-600">생장 단계: <span class="font-semibold text-gray-800">${stages[Math.floor(Math.random() * stages.length)]}</span></p>
+                        <p class="text-gray-600">병해충: <span class="font-semibold text-${currentPest.color}-600">${currentPest.text}</span></p>
+                        <p class="text-gray-600">생장 속도: <span class="font-semibold text-gray-800">${(Math.random() * 0.5 + 0.8).toFixed(2)} cm/day</span></p>
+                        ${currentPest.color === 'red' ? '<p class="text-yellow-600 mt-2">이상 징후: 잎 반점 발견</p>' : ''}
+                    </div>
+                `;
+                container.innerHTML += card;
+            }
+        }
+        
+        let pestChartInstance, growthChartInstance;
+        function renderVisionCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#374151' } } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: '#6B7280' }, grid: { color: '#E5E7EB' } },
+                    x: { ticks: { color: '#6B7280' }, grid: { display: false } }
+                }
+            };
+            
+            const pestCtx = document.getElementById('pest-chart').getContext('2d');
+            if(pestChartInstance) pestChartInstance.destroy();
+            pestChartInstance = new Chart(pestCtx, {
+                type: 'line',
+                data: {
+                    labels: ['월', '화', '수', '목', '금', '토', '일'],
+                    datasets: [{
+                        label: '흰가루병', data: [12, 19, 3, 5, 2, 3, 7], borderColor: '#EF4444', backgroundColor: '#FEE2E2', tension: 0.1, fill: true
+                    }, {
+                        label: '응애', data: [5, 8, 10, 15, 12, 11, 13], borderColor: '#F59E0B', backgroundColor: '#FEF3C7', tension: 0.1, fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+
+            const growthCtx = document.getElementById('growth-status-chart').getContext('2d');
+            if(growthChartInstance) growthChartInstance.destroy();
+            growthChartInstance = new Chart(growthCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['건강', '주의', '위험'],
+                    datasets: [{
+                        data: [300, 50, 15],
+                        backgroundColor: ['#22C55E', '#FBBF24', '#EF4444'],
+                        borderColor: '#FFFFFF',
+                        borderWidth: 2
+                    }]
+                },
+                options: { 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { color: '#374151' } } } 
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const map = document.getElementById('greenhouse-map');
+            for (let i = 0; i < 12; i++) {
+                const pipe = document.createElement('div');
+                pipe.className = 'pipe';
+                if (i === robotState.pipe - 1) {
+                    const robotIcon = document.createElement('i');
+                    robotIcon.className = 'fa-solid fa-robot robot-icon';
+                    robotIcon.style.left = `${robotState.position}%`;
+                    pipe.appendChild(robotIcon);
+                }
+                map.appendChild(pipe);
+            }
+            
+            const equipmentStatus = document.getElementById('equipment-status');
+            const equipments = ['관수 시스템', '환기 장치', '냉난방 장치', 'LED 조명', '카메라 #1', '카메라 #2'];
+            equipmentStatus.innerHTML = equipments.map(e => `<li>${e}: <span class="font-semibold text-green-600">정상</span></li>`).join('');
+
+            const resourceUsage = document.getElementById('resource-usage');
+            resourceUsage.innerHTML = `
+                <li>전력 소비량: <span class="font-bold text-gray-800">15.2 kWh</span></li>
+                <li>물 사용량: <span class="font-bold text-gray-800">250 L</span></li>
+                <li>비료 투입량: <span class="font-bold text-gray-800">1.5 L</span></li>
+            `;
+
+            // 환경설정 탭 메뉴 클릭 이벤트 처리
+            const settingsMenu = document.getElementById('settings-menu');
+            settingsMenu.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetLink = e.target.closest('a.settings-menu-item');
+                if (!targetLink) return;
+
+                const targetPanelId = 'settings-' + targetLink.dataset.target;
+
+                // 모든 메뉴 아이템에서 active 클래스 제거
+                settingsMenu.querySelectorAll('.settings-menu-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                // 클릭된 아이템에 active 클래스 추가
+                targetLink.classList.add('active');
+
+                // 모든 설정 패널 숨기기
+                document.querySelectorAll('.settings-panel').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                // 타겟 패널 보이기
+                document.getElementById(targetPanelId).classList.add('active');
+            });
+
+            updateRobotData();
+            updateEnvironmentData();
+            generateGrowthData();
+            
+            setInterval(updateRobotData, 2000);
+            setInterval(updateEnvironmentData, 5000);
+            setInterval(generateGrowthData, 30000);
+        });
+    </script>
+</body>
+</html>
+
